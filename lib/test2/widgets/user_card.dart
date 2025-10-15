@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:habitbegone_admin/test2/model/app-user_model.dart';
 import 'package:habitbegone_admin/test2/model/user_model.dart';
 
 class UserCard extends StatelessWidget {
@@ -25,7 +26,7 @@ class UserCard extends StatelessWidget {
           child: Text(user.name[0]),
         ),
         title: Text(user.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text("${user.email}\nRole: ${user.role}"),
+        // subtitle: Text("${user.email}\nRole: ${user.role}"),
         isThreeLine: true,
         trailing: Wrap(
           spacing: 8,

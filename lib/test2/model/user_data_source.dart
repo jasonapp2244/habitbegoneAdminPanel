@@ -1,3 +1,4 @@
+import 'package:habitbegone_admin/test2/model/app-user_model.dart';
 import 'package:habitbegone_admin/test2/model/user_model.dart';
 import 'package:flutter/material.dart';
 
@@ -55,21 +56,21 @@ class UserDataSource extends DataTableSource {
   DataRow getRow(int index) {
     assert(index < _filtered.length);
     final user = _filtered[index];
-    final selected = selectedIds.contains(user.id);
+    final selected = selectedIds.contains(user.uid);
 
     return DataRow.byIndex(
       index: index,
       selected: selected,
       onSelectChanged: (bool? isSelected) {
         if (isSelected != null) {
-          onSelectedChanged(isSelected, user.id);
+          onSelectedChanged(isSelected, user.uid);
           notifyListeners();
         }
       },
       cells: [
         DataCell(Text(user.name)),
         DataCell(Text(user.email)),
-        DataCell(Text(user.role)),
+        // DataCell(Text(user.role)),
         DataCell(
           Text(
             user.isActive ? "Active" : "Inactive",

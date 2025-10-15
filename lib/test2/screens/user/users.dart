@@ -10,8 +10,8 @@ class UsersScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const ResponsiveLayout(
-      mobile: UsersMobile(),
-      tablet: UsersTablet(),
+      mobile: UsersWeb(),
+      tablet: UsersWeb(),
       web: UsersWeb(),
     );
   }

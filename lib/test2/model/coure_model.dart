@@ -1,7 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CourseModel {
-  final String id;
+  final String id; // lesson ID
+  final String courseId; // parent course document ID
+  final String fileType;
+  final String fileUrl;
   final String title;
   final String description;
   final String category;
@@ -13,6 +16,9 @@ class CourseModel {
 
   CourseModel({
     required this.id,
+    required this.courseId,
+    required this.fileUrl,
+    required this.fileType,
     required this.title,
     required this.description,
     required this.category,
@@ -22,10 +28,17 @@ class CourseModel {
     required this.uploadedAt,
     required this.files,
   });
-
-  factory CourseModel.fromMap(Map<String, dynamic> data) {
+  // fileUrl
+  factory CourseModel.fromMap(
+    Map<String, dynamic> data, [
+    String? id,
+    String? courseId,
+  ]) {
     return CourseModel(
       id: data['id'] ?? '',
+      courseId: data['courseId'] ?? '',
+      fileType: data['fileType'] ?? '',
+      fileUrl: data['fileUrl'] ?? '',
       title: data['title'] ?? '',
       description: data['description'] ?? '',
       category: data['category'] ?? 'Uncategorized',
@@ -42,6 +55,9 @@ class CourseModel {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'courseId': courseId,
+      'fileType': fileType,
+      'fileUrl': fileUrl,
       'title': title,
       'description': description,
       'category': category,
@@ -53,30 +69,6 @@ class CourseModel {
     };
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // // lib/test2/model/course_model.dart
 // import 'package:cloud_firestore/cloud_firestore.dart';

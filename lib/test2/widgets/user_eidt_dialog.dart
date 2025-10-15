@@ -1,3 +1,4 @@
+import 'package:habitbegone_admin/test2/model/app-user_model.dart';
 import 'package:habitbegone_admin/test2/model/user_model.dart';
 import 'package:flutter/material.dart';
 
@@ -8,13 +9,19 @@ extension AppUserModelCopy on AppUserModel {
     String? email,
     String? role,
     bool? isActive,
+    bool? isBlocked
+
   }) {
     return AppUserModel(
-      id: id ?? this.id,
+      uid: id ?? this.uid,
       name: name ?? this.name,
       email: email ?? this.email,
-      role: role ?? this.role,
+      // role: role ?? this.role,
       isActive: isActive ?? this.isActive,
+      isPaid: isPaid,
+      emailVerified: emailVerified,
+      joinedAt: joinedAt,
+      role: role ?? "standard user", isBlocked: isBlocked ?? false,
     );
   }
 }
@@ -34,7 +41,7 @@ class _UserEditDialogState extends State<UserEditDialog> {
   late String _selectedRole;
   late bool _isActive;
 
-  final List<String> roles = ["Admin", "Editor", "Manager", "Viewer"];
+  final List<String> roles = ["admin","manager", "user"];
 
   @override
   void initState() {

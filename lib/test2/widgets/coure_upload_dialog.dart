@@ -18,11 +18,11 @@ class _CourseUploadDialogState extends State<CourseUploadDialog> {
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
 
-  html.File? selectedFile;
-  String? uploadedUrl;
+  List<html.File> selectedFiles = [];
+  List<Map<String, String>> uploadedFiles = [];
+
   bool _uploading = false;
   double _progress = 0.0;
-  String fileType = '';
   String? _selectedCategory;
 
   //// Course Categories
@@ -33,65 +33,81 @@ class _CourseUploadDialogState extends State<CourseUploadDialog> {
     'Electromagnetic Therapy',
   ];
 
-  //// Pick a file (image, video, or PDF)
-  Future<void> _pickFile() async {
+  /// Pick multiple files (video, image, or PDF)
+  Future<void> _pickFiles() async {
     final uploadInput = html.FileUploadInputElement()
       ..accept = 'video/*,image/*,application/pdf'
+      ..multiple = true
       ..click();
 
     uploadInput.onChange.listen((event) {
-      final file = uploadInput.files?.first;
-      if (file != null) {
+      if (uploadInput.files != null && uploadInput.files!.isNotEmpty) {
         setState(() {
-          selectedFile = file;
-          fileType = file.type.startsWith('video')
-              ? 'video'
-              : file.type.startsWith('image')
-              ? 'image'
-              : 'document';
+          for (var f in uploadInput.files!) {
+            if (!selectedFiles.any((existing) => existing.name == f.name)) {
+              selectedFiles.add(f);
+            }
+          }
         });
       }
     });
   }
 
-  /// Upload file to Firebase Storage with progress
-  Future<void> _uploadToFirebase() async {
-    if (selectedFile == null) return;
+  /// Upload all selected files to Firebase Storage
+  Future<void> _uploadAllFiles() async {
+    if (selectedFiles.isEmpty) return;
 
     setState(() {
       _uploading = true;
       _progress = 0.0;
     });
 
-    final reader = html.FileReader();
-    reader.readAsArrayBuffer(selectedFile!);
-    await reader.onLoad.first;
+    uploadedFiles.clear();
 
-    final data = reader.result as List<int>;
-    final fileName = "${const Uuid().v4()}_${selectedFile!.name}";
-    final ref = FirebaseStorage.instance.ref().child(
-      "course_uploads/$_selectedCategory/$fileName",
-    );
+    for (var i = 0; i < selectedFiles.length; i++) {
+      final file = selectedFiles[i];
+      final reader = html.FileReader();
+      reader.readAsArrayBuffer(file);
+      await reader.onLoad.first;
 
-    final uploadTask = ref.putData(
-      Uint8List.fromList(data),
-      SettableMetadata(contentType: selectedFile!.type),
-    );
+      final data = reader.result as List<int>;
+      final fileName = "${const Uuid().v4()}_${file.name}";
+      final ref = FirebaseStorage.instance.ref().child(
+        "course_uploads/$_selectedCategory/$fileName",
+      );
 
-    // Listen to progress
-    uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
-      setState(() {
-        _progress = snapshot.bytesTransferred / snapshot.totalBytes;
+      final uploadTask = ref.putData(
+        Uint8List.fromList(data),
+        SettableMetadata(contentType: file.type),
+      );
+
+      // Track progress
+      uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
+        setState(() {
+          _progress =
+              (i / selectedFiles.length) +
+              (snapshot.bytesTransferred / snapshot.totalBytes) /
+                  selectedFiles.length;
+        });
       });
-    });
 
-    final snapshot = await uploadTask.whenComplete(() {});
-    uploadedUrl = await snapshot.ref.getDownloadURL();
+      final snapshot = await uploadTask.whenComplete(() {});
+      final url = await snapshot.ref.getDownloadURL();
+
+      // Detect file type
+      final type = file.type.startsWith('video')
+          ? 'video'
+          : file.type.startsWith('image')
+          ? 'image'
+          : 'document';
+
+      uploadedFiles.add({'type': type, 'url': url});
+    }
 
     setState(() => _uploading = false);
   }
 
-  /// Save course metadata in Firestore
+  /// Save course lesson and its files to Firestore
   Future<void> _saveCourse() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedCategory == null) {
@@ -101,11 +117,11 @@ class _CourseUploadDialogState extends State<CourseUploadDialog> {
       return;
     }
 
-    await _uploadToFirebase();
+    await _uploadAllFiles();
 
-    if (uploadedUrl == null && mounted) {
+    if (uploadedFiles.isEmpty && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please upload a file first")),
+        const SnackBar(content: Text("Please upload at least one file")),
       );
       return;
     }
@@ -121,15 +137,14 @@ class _CourseUploadDialogState extends State<CourseUploadDialog> {
           'id': lessonId,
           'title': _titleCtrl.text.trim(),
           'description': _descCtrl.text.trim(),
-          'fileUrl': uploadedUrl,
-          'fileType': fileType,
           'category': _selectedCategory,
           'uploadedAt': FieldValue.serverTimestamp(),
+          'files': uploadedFiles,
         });
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Course uploaded successfully ✅")),
+        const SnackBar(content: Text("Lesson uploaded successfully ✅")),
       );
       Navigator.pop(context);
     }
@@ -140,7 +155,7 @@ class _CourseUploadDialogState extends State<CourseUploadDialog> {
     return AlertDialog(
       title: const Text("Upload New Course Lesson"),
       content: SizedBox(
-        width: 400,
+        width: 420,
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
@@ -175,41 +190,50 @@ class _CourseUploadDialogState extends State<CourseUploadDialog> {
                 ),
                 const SizedBox(height: 20),
 
-                if (selectedFile != null)
+                /// File preview section
+                if (selectedFiles.isNotEmpty)
                   Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("Selected File: ${selectedFile!.name}"),
+                      const Text("Selected Files:"),
                       const SizedBox(height: 8),
-                      if (fileType == 'image')
-                        Image.network(
-                          html.Url.createObjectUrlFromBlob(selectedFile!),
-                          width: 200,
-                          height: 120,
-                          fit: BoxFit.cover,
-                        ),
-                      if (fileType == 'video')
-                        const Icon(
-                          Icons.videocam,
-                          size: 80,
-                          color: Colors.blue,
-                        ),
-                      if (fileType == 'document')
-                        const Icon(
-                          Icons.picture_as_pdf,
-                          size: 80,
-                          color: Colors.red,
-                        ),
+                      ...selectedFiles.map((f) {
+                        final type = f.type.startsWith('video')
+                            ? 'video'
+                            : f.type.startsWith('image')
+                            ? 'image'
+                            : 'document';
+                        return ListTile(
+                          leading: type == 'image'
+                              ? Image.network(
+                                  html.Url.createObjectUrlFromBlob(f),
+                                  width: 50,
+                                  height: 50,
+                                  fit: BoxFit.cover,
+                                )
+                              : Icon(
+                                  type == 'video'
+                                      ? Icons.videocam
+                                      : Icons.picture_as_pdf,
+                                  color: type == 'video'
+                                      ? Colors.blue
+                                      : Colors.red,
+                                ),
+                          title: Text(f.name),
+                        );
+                      }),
                     ],
                   ),
 
                 const SizedBox(height: 15),
                 ElevatedButton.icon(
-                  onPressed: _pickFile,
+                  onPressed: _pickFiles,
                   icon: const Icon(Icons.upload_file),
-                  label: const Text("Pick File"),
+                  label: const Text("Pick Files"),
                 ),
                 const SizedBox(height: 15),
 
+                /// Upload progress
                 if (_uploading)
                   Column(
                     children: [
@@ -227,7 +251,7 @@ class _CourseUploadDialogState extends State<CourseUploadDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: _uploading ? null : () => Navigator.pop(context),
           child: const Text("Cancel"),
         ),
         ElevatedButton(
@@ -236,7 +260,7 @@ class _CourseUploadDialogState extends State<CourseUploadDialog> {
               ? const SizedBox(
                   width: 20,
                   height: 20,
-                  child: CircularProgressIndicator(),
+                  child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : const Text("Save"),
         ),
@@ -245,236 +269,3 @@ class _CourseUploadDialogState extends State<CourseUploadDialog> {
   }
 }
 
-// workfine but modified for performance
-
-// import 'dart:html' as html;
-// import 'dart:typed_data';
-// import 'package:flutter/material.dart';
-// import 'package:firebase_storage/firebase_storage.dart';
-// import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:uuid/uuid.dart';
-
-// class CourseUploadDialog extends StatefulWidget {
-//   const CourseUploadDialog({super.key});
-
-//   @override
-//   State<CourseUploadDialog> createState() => _CourseUploadDialogState();
-// }
-
-// class _CourseUploadDialogState extends State<CourseUploadDialog> {
-//   final _formKey = GlobalKey<FormState>();
-
-//   final _titleCtrl = TextEditingController();
-//   final _descCtrl = TextEditingController();
-//   final _categoryCtrl = TextEditingController();
-
-//   html.File? selectedFile;
-//   String? uploadedUrl;
-//   bool _uploading = false;
-//   String fileType = '';
-
-//   /// Pick a file (image, video, or doc)
-//   Future<void> _pickFile() async {
-//     final uploadInput = html.FileUploadInputElement()
-//       ..accept = 'video/*,image/*,application/pdf'
-//       ..click();
-
-//     uploadInput.onChange.listen((event) {
-//       final file = uploadInput.files?.first;
-//       if (file != null) {
-//         setState(() {
-//           selectedFile = file;
-//           fileType = file.type.startsWith('video')
-//               ? 'video'
-//               : file.type.startsWith('image')
-//               ? 'image'
-//               : 'document';
-//         });
-//       }
-//     });
-//   }
-
-//   /// Upload file to Firebase Storage
-//   double _uploadProgress = 0.0;
-
-//   Future<void> _uploadToFirebase() async {
-//     if (selectedFile == null) return;
-
-//     setState(() {
-//       _uploading = true;
-//       _uploadProgress = 0.0;
-//     });
-
-//     try {
-//       final reader = html.FileReader();
-//       reader.readAsArrayBuffer(selectedFile!);
-//       await reader.onLoad.first;
-
-//       final data = reader.result as List<int>;
-//       final fileName = "${const Uuid().v4()}_${selectedFile!.name}";
-//       final ref = FirebaseStorage.instance.ref().child("uploads/$fileName");
-
-//       final uploadTask = ref.putData(
-//         Uint8List.fromList(data),
-//         SettableMetadata(contentType: selectedFile!.type),
-//       );
-
-//       // ✅ Listen to upload progress
-//       uploadTask.snapshotEvents.listen((event) {
-//         final progress = event.bytesTransferred / event.totalBytes;
-//         setState(() => _uploadProgress = progress);
-//       });
-
-//       // ✅ Wait for completion
-//       final snapshot = await uploadTask;
-//       uploadedUrl = await snapshot.ref.getDownloadURL();
-
-//       debugPrint("✅ Uploaded successfully: $uploadedUrl");
-//     } catch (e) {
-//       debugPrint("❌ Upload error: $e");
-//       if (mounted) {
-//         ScaffoldMessenger.of(
-//           context,
-//         ).showSnackBar(SnackBar(content: Text("Upload failed: $e")));
-//       }
-//     } finally {
-//       setState(() => _uploading = false);
-//     }
-//   }
-
-//   /// Save metadata in Firestore
-//   Future<void> _saveCourse() async {
-//     if (!_formKey.currentState!.validate()) return;
-
-//     await _uploadToFirebase();
-
-//     if (uploadedUrl == null && mounted) {
-//       ScaffoldMessenger.of(
-//         context,
-//       ).showSnackBar(const SnackBar(content: Text("Please upload a file")));
-//       return;
-//     }
-
-//     try {
-//       final courseId = const Uuid().v4();
-
-//       await FirebaseFirestore.instance.collection('courses').doc(courseId).set({
-//         'id': courseId,
-//         'title': _titleCtrl.text,
-//         'description': _descCtrl.text,
-//         'category': _categoryCtrl.text,
-//         'fileUrl': uploadedUrl,
-//         'fileType': fileType,
-//         'uploadedAt': FieldValue.serverTimestamp(),
-//       });
-
-//       debugPrint("✅ Course saved successfully in Firestore");
-//       if (mounted) Navigator.pop(context);
-//     } catch (e) {
-//       debugPrint("❌ Firestore error: $e");
-//       if (mounted) {
-//         ScaffoldMessenger.of(
-//           context,
-//         ).showSnackBar(SnackBar(content: Text("Error saving course: $e")));
-//       }
-//     }
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return AlertDialog(
-//       title: const Text("Upload New Course"),
-//       content: SizedBox(
-//         width: 400,
-//         child: Form(
-//           key: _formKey,
-//           child: SingleChildScrollView(
-//             child: Column(
-//               crossAxisAlignment: CrossAxisAlignment.stretch,
-//               children: [
-//                 TextFormField(
-//                   controller: _titleCtrl,
-//                   decoration: const InputDecoration(labelText: "Course Title"),
-//                   validator: (v) => v!.isEmpty ? 'Enter title' : null,
-//                 ),
-//                 const SizedBox(height: 10),
-//                 TextFormField(
-//                   controller: _descCtrl,
-//                   decoration: const InputDecoration(
-//                     labelText: "Course Description",
-//                   ),
-//                   validator: (v) => v!.isEmpty ? 'Enter description' : null,
-//                 ),
-//                 const SizedBox(height: 10),
-//                 TextFormField(
-//                   controller: _categoryCtrl,
-//                   decoration: const InputDecoration(
-//                     labelText: "Course Category",
-//                   ),
-//                   validator: (v) => v!.isEmpty ? 'Enter category' : null,
-//                 ),
-//                 const SizedBox(height: 20),
-
-//                 if (selectedFile != null)
-//                   Text("Selected File: ${selectedFile!.name}"),
-
-//                 const SizedBox(height: 10),
-//                 ElevatedButton.icon(
-//                   onPressed: _pickFile,
-//                   icon: const Icon(Icons.upload_file),
-//                   label: const Text("Pick File"),
-//                 ),
-//                 if (_uploading) ...[
-//                   LinearProgressIndicator(value: _uploadProgress),
-//                   const SizedBox(height: 8),
-//                   Text(
-//                     "Uploading: ${(_uploadProgress * 100).toStringAsFixed(1)}%",
-//                     textAlign: TextAlign.center,
-//                   ),
-//                 ],
-//                 if (selectedFile != null)
-//                   Column(
-//                     children: [
-//                       Text("Selected File: ${selectedFile!.name}"),
-//                       if (fileType == 'image')
-//                         Image.network(
-//                           html.Url.createObjectUrlFromBlob(selectedFile!),
-//                           width: 200,
-//                           height: 120,
-//                           fit: BoxFit.cover,
-//                         ),
-//                       if (fileType == 'video')
-//                         const Icon(
-//                           Icons.videocam,
-//                           size: 80,
-//                           color: Colors.blue,
-//                         ),
-//                       if (fileType == 'document')
-//                         const Icon(
-//                           Icons.picture_as_pdf,
-//                           size: 80,
-//                           color: Colors.red,
-//                         ),
-//                     ],
-//                   ),
-//                 const SizedBox(height: 20),
-
-//                 // ✅ Progress Bar
-//               ],
-//             ),
-//           ),
-//         ),
-//       ),
-//       actions: [
-//         TextButton(
-//           onPressed: _uploading ? null : () => Navigator.pop(context),
-//           child: const Text("Cancel"),
-//         ),
-//         ElevatedButton(
-//           onPressed: _uploading ? null : _saveCourse,
-//           child: Text(_uploading ? "Uploading..." : "Save"),
-//         ),
-//       ],
-//     );
-//   }
-// }
