@@ -1,9 +1,9 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:habitbegone_admin/firebase_options.dart';
-import 'package:habitbegone_admin/test2/provider/theme_provider.dart';
-import 'package:habitbegone_admin/test2/provider/user_provider.dart';
-import 'package:habitbegone_admin/test2/screens/login/login_screen.dart';
+import 'package:habitbegone_admin/provider/theme_provider.dart';
+import 'package:habitbegone_admin/provider/user_provider.dart';
+import 'package:habitbegone_admin/screens/login/login_screen.dart';
 import 'package:provider/provider.dart';
 
 void main() async {
