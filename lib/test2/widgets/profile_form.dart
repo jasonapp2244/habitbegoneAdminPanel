@@ -1,4 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:habitbegone_admin/test2/provider/user_provider.dart';
+import 'package:provider/provider.dart';
 
 class ProfileForm extends StatefulWidget {
   const ProfileForm({super.key});
@@ -10,9 +14,13 @@ class ProfileForm extends StatefulWidget {
 class _ProfileFormState extends State<ProfileForm> {
   final _formKey = GlobalKey<FormState>();
   String? name, email, phone, role;
+  final _firestore = FirebaseFirestore.instance;
+  final TextEditingController emailController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -24,30 +32,45 @@ class _ProfileFormState extends State<ProfileForm> {
             children: [
               const Align(
                 alignment: Alignment.centerLeft,
-                child: Text("Account Information", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                child: Text(
+                  "Account Information",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
               ),
               const SizedBox(height: 24),
 
               TextFormField(
-                decoration: const InputDecoration(labelText: "Full Name", border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                  labelText: "Full Name",
+                  border: OutlineInputBorder(),
+                ),
                 onSaved: (val) => name = val,
               ),
               const SizedBox(height: 16),
 
               TextFormField(
-                decoration: const InputDecoration(labelText: "Email Address", border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                  labelText: "Email Address",
+                  border: OutlineInputBorder(),
+                ),
                 onSaved: (val) => email = val,
               ),
               const SizedBox(height: 16),
 
               TextFormField(
-                decoration: const InputDecoration(labelText: "Phone Number", border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                  labelText: "Phone Number",
+                  border: OutlineInputBorder(),
+                ),
                 onSaved: (val) => phone = val,
               ),
               const SizedBox(height: 16),
 
               DropdownButtonFormField<String>(
-                decoration: const InputDecoration(labelText: "Role", border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                  labelText: "Role",
+                  border: OutlineInputBorder(),
+                ),
                 items: const [
                   DropdownMenuItem(value: "Admin", child: Text("Admin")),
                   DropdownMenuItem(value: "Manager", child: Text("Manager")),
@@ -60,19 +83,45 @@ class _ProfileFormState extends State<ProfileForm> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     if (_formKey.currentState!.validate()) {
                       _formKey.currentState!.save();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Profile updated successfully!")),
-                      );
+
+                      try {
+                        // Create a map of data to store
+                        final userData = {"email": email, "phone": phone};
+                        final user = FirebaseAuth.instance.currentUser;
+
+                        if (user != null) {
+                          // Save to Firestore (for example, in a 'app_users' collection)
+                          await _firestore
+                              .collection("app_users")
+                              .doc("contact_info")
+                              .set(userData);
+                        }
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Profile saved successfully!"),
+                          ),
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Error saving profile: $e")),
+                        );
+                      }
                     }
                   },
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  child: const Text("Save Changes", style: TextStyle(fontSize: 16)),
+                  child: const Text(
+                    "Save Changes",
+                    style: TextStyle(fontSize: 16),
+                  ),
                 ),
               ),
             ],

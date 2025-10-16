@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:habitbegone_admin/test2/model/app-user_model.dart';
-import 'package:habitbegone_admin/test2/model/user_model.dart';
 
 class UserCard extends StatelessWidget {
   final AppUserModel user;

@@ -55,4 +55,22 @@ class UserModel {
       'photoUrl': photoUrl,
     };
   }
+
+  UserModel copyWith({
+    String? uid,
+    String? name,
+    String? email,
+    String? role,
+    String? phone,
+  }) {
+    return UserModel(
+      uid: uid ?? this.uid,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      role: role ?? this.role,
+      isPaid: isPaid,
+      isBlocked: isBlocked,
+      emailVerified: emailVerified,
+    );
+  }
 }

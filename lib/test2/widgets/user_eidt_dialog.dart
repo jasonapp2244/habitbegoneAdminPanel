@@ -1,5 +1,4 @@
 import 'package:habitbegone_admin/test2/model/app-user_model.dart';
-import 'package:habitbegone_admin/test2/model/user_model.dart';
 import 'package:flutter/material.dart';
 
 extension AppUserModelCopy on AppUserModel {
@@ -13,7 +12,7 @@ extension AppUserModelCopy on AppUserModel {
 
   }) {
     return AppUserModel(
-      uid: id ?? this.uid,
+      uid: id ?? uid,
       name: name ?? this.name,
       email: email ?? this.email,
       // role: role ?? this.role,

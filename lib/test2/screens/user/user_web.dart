@@ -6,7 +6,6 @@ import 'package:csv/csv.dart';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 import 'package:habitbegone_admin/test2/model/app-user_model.dart';
-import 'package:habitbegone_admin/test2/model/user_model.dart';
 import 'package:habitbegone_admin/test2/screens/user/user_deatils/user_deatail_web.dart';
 import 'package:habitbegone_admin/test2/widgets/sidebar.dart';
 import 'package:habitbegone_admin/test2/widgets/user_eidt_dialog.dart';
@@ -152,7 +151,7 @@ class _UsersWebState extends State<UsersWeb> {
         u.email,
         u.isPaid,
         u.isActive ? "Yes" : "No",
-        u.emailVerified ?? "No",
+        u.emailVerified ,
         u.joinedAt?.toString().split(' ').first ?? "",
       ]);
     }

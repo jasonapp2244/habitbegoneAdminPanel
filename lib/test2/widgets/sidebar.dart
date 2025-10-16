@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:habitbegone_admin/test2/screens/cousre/coure_upload.dart';
 import 'package:habitbegone_admin/test2/screens/dashboard/dashboard_view.dart';
+import 'package:habitbegone_admin/test2/screens/profile/profile_view.dart';
 import 'package:habitbegone_admin/test2/screens/setting/setting.dart';
 import 'package:habitbegone_admin/test2/screens/user/users.dart';
 
@@ -23,7 +24,7 @@ class Sidebar extends StatelessWidget {
             ),
           ),
           ListTile(
-            onTap: () => Navigator.push(
+            onTap: () => Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (_) => DashboardScreen()),
             ),
@@ -32,7 +33,7 @@ class Sidebar extends StatelessWidget {
           ),
           // UsersScreen
           ListTile(
-            onTap: () => Navigator.push(
+            onTap: () => Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (_) => UsersScreen()),
             ),
@@ -41,7 +42,7 @@ class Sidebar extends StatelessWidget {
           ),
           ListTile(leading: Icon(Icons.shopping_cart), title: Text("Orders")),
           ListTile(
-            onTap: () => Navigator.push(
+            onTap: () => Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (_) => SettingsScreen()),
             ),
@@ -55,6 +56,14 @@ class Sidebar extends StatelessWidget {
             ),
             leading: Icon(Icons.settings),
             title: Text("Course"),
+          ),
+          ListTile(
+            onTap: () => Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => ProfileScreen()),
+            ),
+            leading: Icon(Icons.settings),
+            title: Text("Profile"),
           ),
         ],
       ),

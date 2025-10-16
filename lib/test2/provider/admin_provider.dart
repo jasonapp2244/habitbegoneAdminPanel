@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:habitbegone_admin/test2/model/personal_deatil_model.dart';
 
-class UserProvider with ChangeNotifier {
+class AdminProvider with ChangeNotifier {
   UserModel? _user;
   bool _loading = false;
 

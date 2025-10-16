@@ -24,16 +24,16 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
           : null,
       title: Text(heading, style: const TextStyle(color: Colors.black)),
       actions: [
-        GestureDetector(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const ProfileScreen()),
-          ),
-          child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: CircleAvatar(child: Icon(Icons.person)),
-          ),
-        ),
+        // GestureDetector(
+        //   onTap: () => Navigator.push(
+        //     context,
+        //     MaterialPageRoute(builder: (_) => const ProfileScreen()),
+        //   ),
+        //   child: const Padding(
+        //     padding: EdgeInsets.symmetric(horizontal: 16),
+        //     child: CircleAvatar(child: Icon(Icons.person)),
+        //   ),
+        // ),
         Padding(
           padding: const EdgeInsets.only(right: 8.0),
           child: Text(
