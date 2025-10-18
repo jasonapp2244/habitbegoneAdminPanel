@@ -46,16 +46,9 @@ class _LoginWebState extends State<LoginWeb> {
         password: _passwordController.text.trim(),
       );
 
-      // ✅ Login successful → navigate to your next screen
-      // if (mounted) {
-      // Navigator.pushReplacement(
-      //   context,
-      //   MaterialPageRoute(builder: (_) => const DashboardScreen()),
-      // );
-      // } final user = _auth.currentUser;
+    
       final user = _auth.currentUser;
       if (user != null) {
-        // Load user data from Firestore into provider
         await Provider.of<UserProvider>(
           context,
           listen: false,

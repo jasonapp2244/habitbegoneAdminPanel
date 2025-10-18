@@ -24,7 +24,6 @@ class UserModel {
     this.photoUrl,
   });
 
-  // Convert Firestore data to UserModel
   factory UserModel.fromMap(Map<String, dynamic> data) {
     return UserModel(
       uid: data['uid'] ?? '',
@@ -41,7 +40,6 @@ class UserModel {
     );
   }
 
-  // Convert to map (for saving to Firestore)
   Map<String, dynamic> toMap() {
     return {
       'uid': uid,

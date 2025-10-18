@@ -56,18 +56,8 @@ class _DashboardWebState extends State<DashboardWeb> {
                                     value: '${snapshot.data ?? "no user"}',
                                     icon: Icons.person,
                                   );
-                                  // Text(
-                                  // '👥 Total Registered Users: ${snapshot.data??"no user"}',
-                                  // style: const TextStyle(fontSize: 24),
-                                  // );
                                 },
                               ),
-
-                              //  SummaryCard(
-                              //   title: "Users",
-                              //   value: "1,245",
-                              //   icon: Icons.person,
-                              // ),
                             ),
                             SizedBox(width: 16),
                             Expanded(

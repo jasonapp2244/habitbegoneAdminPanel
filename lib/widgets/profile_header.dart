@@ -25,13 +25,6 @@ class ProfileHeader extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         child: Row(
           children: [
-            // CircleAvatar(
-            //   radius: 40,
-            //   backgroundImage: NetworkImage(
-            //     user.photoUrl ?? 'https://i.pravatar.cc/150?img=5',
-            //   ),
-            // ),
-            // const SizedBox(width: 20),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
